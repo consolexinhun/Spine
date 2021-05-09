@@ -9,6 +9,7 @@ import random
 import math
 from scipy import ndimage
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+import random
 
 def compute_distance_weight_matrix(mask, alpha=1, beta=8, omega=2):
     mask = np.asarray(mask)
