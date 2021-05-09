@@ -1,37 +1,50 @@
 # 安装环境
 
-+ pytorch
-+ torchvision
-+ scipy
-+ tensorboardX
-+ numpy
-+ opencv-python
-+ matplotlib
-+ networkx
+- pytorch
+- torchvision
+- scipy
+- tensorboardX
+- numpy
+- opencv-python
+- matplotlib
+- networkx
+- h5py
+- skimage
+- medpy
+- nibabel
+- torchsummary
 
 # fix bug
 
-0、datasets/coarse_create_h5
+## 0、datasets/coarse_create_h5
+
 line 35: train_num 168
+
 line 38: val_num 4
+
 line 41: total_num 172
 
-1、datasets/coarse_create_h5
+## 1、datasets/coarse_create_h5
 line 7:把 matplotlib 的 TKAgg注释
 
 networks/losses.py
+
 line 7:把 matplotlib 的 TKAgg注释
 
 
-2、datasets/coarse_h5
+## 2、datasets/coarse_h5
 line 74: 注释
+
 line 81：注释
+
 line 83：改为 `return training_data_loader, val_data_loader, None, f`
 
 datasets/fine_h5
 
 line 69: 注释
+
 line 76：注释
+
 line 78：改为 `return training_data_loader, val_data_loader, None, f`
 
 
