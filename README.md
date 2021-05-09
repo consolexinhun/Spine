@@ -32,7 +32,7 @@
 
 3. 创建粗分割数据划分
 
-`python -u ./datasets/coarse_create_h5.py --data_root_dir=${data_root_dir}`
+`python -u ./datasets/coarse_create_h5.py --data_root_dir=${data_root_dir} --fold_num=1`
 
 4. 训练粗分割 
 
@@ -56,6 +56,6 @@
 
 9. 测试（暂时还用不了）
 
-`python -u test_coarse_fine.py --device=cuda:0 --fold_ind=${fold_ind} --data_dir=${data_root_dir}`
+`python -u test_coarse_fine.py --device=cuda:0 --fold_ind=1 --data_dir=${data_root_dir}`
 
 
