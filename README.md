@@ -9,58 +9,53 @@
 - matplotlib
 - networkx
 - h5py
-- skimage
+- scikit-iamge
 - medpy
 - nibabel
 - torchsummary
 
-# fix bug
+# 数据集
 
-## 0、datasets/coarse_create_h5
+数据集在 219 机器的 /mnt/ssd/dengyang/Verse
 
-line 35: train_num 168
+拷贝过来直接放到 项目根目录下
 
-line 38: val_num 4
+# 运行
 
-line 41: total_num 172
+1. 指定数据集的目录 
 
-## 1、datasets/coarse_create_h5
-line 7:把 matplotlib 的 TKAgg注释
+`data_root_dir=/home/ubuntu/03_SpineParseNet/Verse`
 
-networks/losses.py
+2. 设置可见显卡 看哪张卡空了用哪张
 
-line 7:把 matplotlib 的 TKAgg注释
+`CUDA_VISIBLE_DEVICES="1"` 
 
+3. 创建粗分割数据划分
 
-## 2、datasets/coarse_h5
-line 74: 注释
+`python -u ./datasets/coarse_create_h5.py --data_root_dir=${data_root_dir}`
 
-line 81：注释
+4. 训练粗分割 
 
-line 83：改为 `return training_data_loader, val_data_loader, None, f`
+`python -u train_coarse.py --model=DeepLabv3_plus_skipconnection_3d --fold_ind=1 --data_dir=${data_root_dir}/coarse --no-pre_trained --epochs=100 --device=cuda:0 --learning_rate=0.001 --loss=CrossEntropyLoss`
 
-datasets/fine_h5
+5. GCN 粗分割 
 
-line 69: 注释
+`python -u train_coarse.py --model=DeepLabv3_plus_gcn_skipconnection_3d --fold_ind=1 --data_dir=${data_root_dir}/coarse --pre_trained --epochs=50 --device=cuda:0 --learning_rate=0.001 --gcn_mode=2 --ds_weight=0.3 --loss=CrossEntropyLoss`
 
-line 76：注释
+6. 抽取粗分割特征
 
-line 78：改为 `return training_data_loader, val_data_loader, None, f`
+`python -u coarse_semantic_feature.py --device=cuda:0 --fold_ind=${fold_ind} --model=DeepLabv3_plus_gcn_skipconnection_3d --data_dir=${data_root_dir}/coarse --gcn_mode=2 --ds_weight=0.3 --loss=CrossEntropyLoss --pre_trained`
 
+7. 创建细化分割数据划分
 
-3、coarse_semantic_feature
+`python -u ./datasets/fine_create_h5.py --coarse_dir=${data_root_dir}/coarse --fine_dir=${data_root_dir}/fine`
 
-line 139：254 改为 173
+8. 训练细化分割
 
-line 326：把 `conf['trainer']['log_after_iters'] = args.log_after_iters` 注释掉就行了
-反正这个参数又没有用到
+`python -u train_fine.py --fold_ind=1 --data_dir=${data_root_dir}/fine --device=cuda:0`
 
+9. 测试（暂时还用不了）
 
-4、fine 里面没有划分数据，需要从 coarse 里面拷贝
-（执行完 main.sh 第一步之后）
-
-进入到 fine 目录
-
-`cp ../coarse/*.npz ./`
+`python -u test_coarse_fine.py --device=cuda:0 --fold_ind=${fold_ind} --data_dir=${data_root_dir}`
 
 

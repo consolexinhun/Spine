@@ -1,4 +1,5 @@
 data_root_dir=/home/ubuntu/03_SpineParseNet/Verse
+set -e
 #echo "step 1: create the h5 dataset for coarse segmentation stage...................................................................."
 #python -u ./datasets/coarse_create_h5.py --data_root_dir=${data_root_dir}
 export CUDA_VISIBLE_DEVICES="1"
