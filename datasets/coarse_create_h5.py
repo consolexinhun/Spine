@@ -4,6 +4,7 @@ import os
 import nibabel as nib
 from skimage import transform
 import matplotlib
+import random
 # matplotlib.use('TKAgg')
 import math
 from scipy import ndimage
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument("--data_root_dir", type=str, default='data',
                         help="the absolute directory of the data.")
 
-    parser.add_argument("--fold_num", type=int, default=5,
+    parser.add_argument("--fold_num", type=int, default=1,
                         help="the folder number for cross-validation.")
 
     parser.add_argument("--train_num", type=int, default=168,
@@ -107,10 +108,11 @@ if __name__ == '__main__':
                 mask_out = np.zeros((1, depth, height, width), dtype=np.uint8)
 
                 delata = depth - d
-                start_d = int(math.ceil(delata / 2.))
-                end_d = -int(delata - start_d)
-                if end_d == 0:
-                    end_d = None
+                               # start_d = int(math.ceil(delata / 2.))
+                start_d = random.randint(0,delata)
+                end_d = start_d+d
+                # if end_d == 0:
+                #     end_d = None
                 mr_out[0, 0, start_d: end_d, :, :] = mr_resize
                 mr_out -= mean
                 mr_out /= std
@@ -180,10 +182,11 @@ if __name__ == '__main__':
                 mask_out = np.zeros((1, depth, height, width), dtype=np.uint8)
 
                 delata = depth - d
-                start_d = int(math.ceil(delata / 2.))
-                end_d = -int(delata - start_d)
-                if end_d == 0:
-                    end_d = None
+                # start_d = int(math.ceil(delata / 2.))
+                start_d = random.randint(0,delata)
+                end_d = start_d+d
+                # if end_d == 0:
+                #     end_d = None
                 mr_out[0, 0, start_d: end_d, :, :] = mr_resize
                 mr_out -= mean
                 mr_out /= std
@@ -251,10 +254,11 @@ if __name__ == '__main__':
                 mask_out = np.zeros((1, depth, height, width), dtype=np.uint8)
 
                 delata = depth - d
-                start_d = int(math.ceil(delata / 2.))
-                end_d = -int(delata - start_d)
-                if end_d == 0:
-                    end_d = None
+                # start_d = int(math.ceil(delata / 2.))
+                start_d = random.randint(0,delata)
+                end_d = start_d+d
+                # if end_d == 0:
+                #     end_d = None
                 mr_out[0, 0, start_d: end_d, :, :] = mr_resize
                 mr_out -= mean
                 mr_out /= std
