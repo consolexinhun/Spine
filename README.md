@@ -60,6 +60,10 @@ python -u coarse_semantic_feature.py --device=cuda:0 --fold_ind=${fold_ind} --mo
 
 7. 创建细化分割数据划分
 
+在这之前需要把 粗分割的 npz 拷贝过来，进入到 fine 目录
+
+`cp ../coarse/*.npz ./`
+
 ```
 python -u ./datasets/fine_create_h5.py --coarse_dir=${data_root_dir}/coarse --fine_dir=${data_root_dir}/fine
 ```
