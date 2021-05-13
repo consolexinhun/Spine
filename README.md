@@ -79,7 +79,7 @@ python -u ./datasets/fine_create_h5.py --coarse_dir=${data_root_dir}/coarse --fi
 看看里面有什么参数调整一下
 
 ```
-python -u train_fine.py --fold_ind=1 --data_dir=${data_root_dir}/fine --device=cuda:0
+python -u train_fine.py --fold_ind=1 --data_dir=${data_root_dir}/fine --device=cuda:0 --epochs=50
 ```
 
 9. 测试（暂时还用不了）

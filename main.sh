@@ -25,7 +25,7 @@
 #python -u ./datasets/fine_create_h5.py --coarse_dir=${data_root_dir}/coarse --fine_dir=${data_root_dir}/fine
 
 # echo "step 6: training the 2D ResUNet model for refinement stage....................................................................."
-# 	python -u train_fine.py --fold_ind=1 --data_dir=${data_root_dir}/fine --device=cuda:0
+# 	python -u train_fine.py --fold_ind=1 --data_dir=${data_root_dir}/fine --device=cuda:0 --epochs=50
 
 #echo "step 7: testing................................................................................................................"
 #	python -u test_coarse_fine.py --device=cuda:0 --fold_ind=1 --data_dir=${data_root_dir}
