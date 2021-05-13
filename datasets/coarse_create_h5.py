@@ -33,10 +33,10 @@ if __name__ == '__main__':
     parser.add_argument("--fold_num", type=int, default=1,
                         help="the folder number for cross-validation.")
 
-    parser.add_argument("--train_num", type=int, default=168,
+    parser.add_argument("--train_num", type=int, default=140,
                         help="the subjects number of training dataset.")
 
-    parser.add_argument("--val_num", type=int, default=4,
+    parser.add_argument("--val_num", type=int, default=32,
                         help="the subjects number for validation dataset, which is used to save the best model in training stage.")
 
     parser.add_argument("--total_num", type=int, default=172,

@@ -41,7 +41,7 @@ CUDA_VISIBLE_DEVICES="1"
 这个文件里可以指定 训练，验证 集的比例
 
 ```
-python -u ./datasets/coarse_create_h5.py --data_root_dir=${data_root_dir} --fold_num=1
+python -u ./datasets/coarse_create_h5.py --data_root_dir=${data_root_dir} --fold_num=1 --train_num=140 --val_num=32
 ```
 
 4. 训练粗分割 
