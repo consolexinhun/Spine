@@ -125,7 +125,7 @@ if __name__ == '__main__':
     mean = 466.0
     std = 379.0
 
-    for fold_ind in range(1, 6):
+    for fold_ind in range(1, 2):
         foldIndData = np.load(os.path.join(fineDir, 'split_ind_fold' + str(fold_ind) + '.npz'))
         unaryDir = os.path.join(coarseDir, 'out', 'fold' + str(fold_ind), identifier)
         outDir = os.path.join(fineDir, 'in', 'h5py')

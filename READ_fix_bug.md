@@ -55,3 +55,8 @@ line 326：把 `conf['trainer']['log_after_iters'] = args.log_after_iters` 注�
 进入到 fine 目录
 
 `cp ../coarse/*.npz ./`
+
+
+5、datasets/fine_create_h5
+
+line 128 ： 6 改成 2 （5 折 变为 1 折）
