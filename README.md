@@ -20,6 +20,8 @@
 
 拷贝过来直接放到 项目根目录下
 
+![](https://gitee.com/consolecode/blog-img/raw/master/img/20210513150802.png)
+
 # 运行
 
 1. 指定数据集的目录 
