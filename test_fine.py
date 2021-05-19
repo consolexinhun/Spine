@@ -155,17 +155,17 @@ if __name__ == '__main__':
     foldIndData = np.load(os.path.join(fine_dir, 'split_ind_fold' + str(fold_ind) + '.npz'))
     train_ind = foldIndData['train_ind']
     val_ind = foldIndData['val_ind']
-    test_ind = foldIndData['test_ind']
+    test_ind = foldIndData['val_ind']
 
     mrDir = os.path.join(fine_dir, 'in/nii/original_mr')
     maskDir = os.path.join(fine_dir, 'in/nii/mask')
-    pre_seg_dir = os.path.join(coarse_dir, 'out', 'fold' + str(fold_ind), args.coarse_identifier)
+    pre_seg_dir = os.path.join(coarse_dir, 'coarse_out', 'fold' + str(fold_ind), args.coarse_identifier)
 
     if args.coarse_identifier == 'DeepLabv3_plus_gcn_skipconnection_3d_gcn_mode_2_ds_weight_0.3_loss_' \
                                  'CrossEntropyLoss_Adam_lr_0.001_pretrained':
-        fold_dir = os.path.join(fine_dir, 'out', 'fold' + str(fold_ind))
+        fold_dir = os.path.join(fine_dir, 'fine_out', 'fold' + str(fold_ind))
     else:
-        fold_dir = os.path.join(fine_dir, 'out', 'fold' + str(fold_ind) + '_' + args.coarse_identifier)
+        fold_dir = os.path.join(fine_dir, 'fine_out', 'fold' + str(fold_ind) + '_' + args.coarse_identifier)
     if not os.path.exists(fold_dir):
         os.makedirs(fold_dir)
     if args.model == 'non_local_crf':
@@ -274,7 +274,7 @@ if __name__ == '__main__':
 
     try:
         train_data_loader, val_data_loader, test_data_loader, f = load_data(data_path, batch_size=1, shuffle=False)
-
+        test_data_loader = val_data_loader
         model.eval()
 
         if args.dimension == 2:

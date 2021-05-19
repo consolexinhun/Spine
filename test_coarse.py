@@ -218,7 +218,7 @@ def get_parser():
 
     parser.set_defaults(pre_trained=True)
 
-    parser.add_argument("--device", type=str, default='cuda:3',
+    parser.add_argument("--device", type=str, default='cuda:0',
                         help="which gpu to use")
 
     parser.add_argument('--loss', type=str, default='CrossEntropyLoss',
@@ -307,7 +307,7 @@ def main():
     foldIndData = np.load(os.path.join(dataDir, 'split_ind_fold' + str(foldInd) + '.npz'))
     train_ind = foldIndData['train_ind']
     val_ind = foldIndData['val_ind']
-    test_ind = foldIndData['test_ind']
+    test_ind = foldIndData['val_ind']
 
     conf = get_default_conf()
     conf['manual_seed'] = args.seed
@@ -384,7 +384,8 @@ def main():
     elif args.pre_trained:
         identifier = identifier + '_pretrained'
 
-    out_dir = os.path.join(dataDir, 'out', 'fold' + str(foldInd), identifier)
+    out_dir = os.path.join(dataDir, 'coarse_out', 'fold' + str(foldInd), identifier)
+    print(f"粗分割存放的路径:{out_dir}")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
