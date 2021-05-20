@@ -70,6 +70,8 @@ class DiceCoefficient:
 
             per_channel_dice.append(self._dice(binary_prediction[c], target[c]))
 
+        print(f"每个类别的Dice为 :{[dice.item() for dice in per_channel_dice]}")
+
         return torch.mean(torch.tensor(per_channel_dice))
 
         # Average across channels in order to get the final score

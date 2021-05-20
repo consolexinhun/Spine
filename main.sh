@@ -30,7 +30,8 @@ python -u test_coarse.py \
     --data_dir=${data_root_dir}/coarse \
     --model=DeepLabv3_plus_skipconnection_3d \
     --device=cuda:0 \
-    --no-pre_trained
+    --no-pre_trained \
+    --loss=CrossEntropyLoss
 
 
 echo "step 3: training the 3D GCSN model used the pretrained DeepLabv3+ model for coarse segmentation stage.........................."
@@ -52,7 +53,8 @@ python -u test_coarse.py \
     --data_dir=${data_root_dir}/coarse \
     --model=DeepLabv3_plus_gcn_skipconnection_3d \
     --device=cuda:0 \
-    --pre_trained
+    --pre_trained \
+    --loss=CrossEntropyLoss
 
 
 echo "step 4: extracting coarse probability maps....................................................................................."
@@ -67,27 +69,33 @@ python -u coarse_semantic_feature.py \
     --pre_trained
 
 # 注意要从粗分割那里拷贝一下数据集
+cp -r ${data_root_dir}/coarse/*.npz ${data_root_dir}/fine/
 
-# echo "step 5: create the h5 dataset for segmentation refinement stage................................................................"
-# python -u ./datasets/fine_create_h5.py \
-#     --coarse_dir=${data_root_dir}/coarse \
-#     --fine_dir=${data_root_dir}/fine
+echo "step 5: create the h5 dataset for segmentation refinement stage................................................................"
+python -u ./datasets/fine_create_h5.py \
+    --coarse_dir=${data_root_dir}/coarse \
+    --fine_dir=${data_root_dir}/fine
 
-# echo "step 6: training the 2D ResUNet model for refinement stage....................................................................."
-# python -u train_fine.py \
-#     --fold_ind=1 \
-#     --data_dir=${data_root_dir}/fine \
-#     --device=cuda:0 \
-#     --epochs=50
+echo "step 6: training the 2D ResUNet model for refinement stage....................................................................."
+python -u train_fine.py \
+    --fold_ind=1 \
+    --data_dir=${data_root_dir}/fine \
+    --device=cuda:0 \
+    --epochs=50 \
+    --augment \
+    --batch_size=8 \
+    --loss=CrossEntropyLoss
 
-# echo "step 7: testing................................................................................................................"
-# python -u test_coarse_fine.py \
-#     --device=cuda:0 \
-#     --fold_ind=1 \
-#     --data_dir=${data_root_dir}
+echo "step 7: testing................................................................................................................"
+python -u test_coarse_fine.py \
+    --device=cuda:0 \
+    --fold_ind=1 \
+    --data_dir=${data_root_dir} \
+    --loss=CrossEntropyLoss 
 
-# python -u test_fine.py \
-#     --fold_ind=1 \
-#     --data_dir=${data_root_dir} \
-#     --device=cuda:0 \
-#     --augment
+python -u test_fine.py \
+    --fold_ind=1 \
+    --data_dir=${data_root_dir} \
+    --device=cuda:0 \
+    --augment \
+    --loss=CrossEntropyLoss
