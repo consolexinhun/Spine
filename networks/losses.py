@@ -359,7 +359,7 @@ def flatten(tensor):
     # Transpose: (N, C, D, H, W) -> (C, N, D, H, W)
     transposed = tensor.permute(axis_order)
     # Flatten: (C, N, D, H, W) -> (C, N * D * H * W)
-    return transposed.view(C, -1)
+    return transposed.reshape(C, -1)
 
 
 def expand_as_one_hot(input, C, ignore_index=None):
