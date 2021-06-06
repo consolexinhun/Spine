@@ -45,10 +45,8 @@ class UNet3DTrainer:
                  eval_score_higher_is_better=True, best_eval_score=None,
                  logger=None,
                  ds_weight=0):
-        if logger is None:
-            self.logger = utils.get_logger('UNet3DTrainer', level=logging.DEBUG)
-        else:
-            self.logger = logger
+       
+        self.logger = logger
 
         self.logger.info(model)
         self.model = model
@@ -56,10 +54,7 @@ class UNet3DTrainer:
         self.scheduler = lr_scheduler
         self.loss_criterion = loss_criterion
         self.eval_criterion = eval_criterion
-        if isinstance(device, (list, tuple)):
-            self.device = device[0]
-        else:
-            self.device = device
+        self.device = device
         self.loaders = loaders
         self.checkpoint_dir = checkpoint_dir
         self.max_num_epochs = max_num_epochs
@@ -71,71 +66,13 @@ class UNet3DTrainer:
         self.ds_weight = ds_weight
         logger.info(f'eval_score_higher_is_better: {eval_score_higher_is_better}')
 
-        if best_eval_score is not None:
-            self.best_eval_score = best_eval_score
-        else:
-            # initialize the best_eval_score
-            if eval_score_higher_is_better:
-                self.best_eval_score = float('-inf')
-            else:
-                self.best_eval_score = float('+inf')
+        self.best_eval_score = float('-inf')
 
         self.writer = SummaryWriter(log_dir=os.path.join(checkpoint_dir, 'logs'))
 
         self.num_iterations = num_iterations
         self.num_epoch = num_epoch
 
-    @classmethod
-    def from_checkpoint(cls, checkpoint_path, model, optimizer, lr_scheduler, loss_criterion, eval_criterion, loaders,
-                        logger=None,
-                        ds_weight=0):
-        logger.info(f"Loading checkpoint '{checkpoint_path}'...")
-        state = utils.load_checkpoint(checkpoint_path, model, optimizer)
-        logger.info(
-            f"Checkpoint loaded. Epoch: {state['epoch']}. Best val score: {state['best_eval_score']}. Num_iterations: {state['num_iterations']}")
-        checkpoint_dir = os.path.split(checkpoint_path)[0]
-        return cls(model, optimizer, lr_scheduler,
-                   loss_criterion, eval_criterion,
-                   torch.device(state['device']),
-                   loaders, checkpoint_dir,
-                   eval_score_higher_is_better=state['eval_score_higher_is_better'],
-                   best_eval_score=state['best_eval_score'],
-                   num_iterations=state['num_iterations'],
-                   num_epoch=state['epoch'],
-                   max_num_epochs=state['max_num_epochs'],
-                   max_num_iterations=state['max_num_iterations'],
-                   validate_after_iters=state['validate_after_iters'],
-                   log_after_iters=state['log_after_iters'],
-                   validate_iters=state['validate_iters'],
-                   logger=logger,
-                   ds_weight=ds_weight)
-
-    @classmethod
-    def from_pretrained(cls, pre_trained, model, optimizer, lr_scheduler, loss_criterion, eval_criterion,
-                        device, loaders,
-                        max_num_epochs=100, max_num_iterations=1e5,
-                        validate_after_iters=100, log_after_iters=100,
-                        validate_iters=None, num_iterations=1, num_epoch=0,
-                        eval_score_higher_is_better=True, best_eval_score=None,
-                        logger=None,
-                        ds_weight=0):
-        logger.info(f"Logging pre-trained model from '{pre_trained}'...")
-        utils.load_checkpoint(pre_trained, model, None)
-        checkpoint_dir = os.path.split(pre_trained)[0]
-        return cls(model, optimizer, lr_scheduler,
-                   loss_criterion, eval_criterion,
-                   device, loaders, checkpoint_dir,
-                   eval_score_higher_is_better=eval_score_higher_is_better,
-                   best_eval_score=best_eval_score,
-                   num_iterations=num_iterations,
-                   num_epoch=num_epoch,
-                   max_num_epochs=max_num_epochs,
-                   max_num_iterations=max_num_iterations,
-                   validate_after_iters=validate_after_iters,
-                   log_after_iters=log_after_iters,
-                   validate_iters=validate_iters,
-                   logger=logger,
-                   ds_weight=ds_weight)
 
     def fit(self):
         for _ in range(self.num_epoch, self.max_num_epochs):
@@ -150,10 +87,8 @@ class UNet3DTrainer:
 
     def train(self, train_loader):
         """Trains the model for 1 epoch.
-
         Args:
             train_loader (torch.utils.data.DataLoader): training data loader
-
         Returns:
             True if the training should be terminated immediately, False otherwise
         """
@@ -165,17 +100,13 @@ class UNet3DTrainer:
 
         # Call the function of train_loader.__iter__ to return a batch. Here, the train_loader is an instance of DataLoader
         for i, t in enumerate(train_loader):
-            self.logger.info(
-                f'Training iteration {self.num_iterations}. Batch {i}. Epoch [{self.num_epoch}/{self.max_num_epochs - 1}]')
-
-            input, target, weight = self._split_training_batch(t)
-
+            self.logger.info(f'Training iteration {self.num_iterations}. Batch {i}. Epoch [{self.num_epoch}/{self.max_num_epochs - 1}]')
+            input, weight, unary, target = self._split_training_batch(t)
             output, loss = self._forward_pass(input, target, weight)
 
-            train_losses.update(loss.item(), self._batch_size(input))
-
-            # compute gradients and update parameters
             self.optimizer.zero_grad()
+
+            train_losses.update(loss.item(), self._batch_size(input))
             loss.backward()
             self.optimizer.step()
 
@@ -183,15 +114,9 @@ class UNet3DTrainer:
                 # evaluate on validation set
                 eval_score = self.validate(self.loaders['val'])
                 # adjust learning rate if necessary
-                # if isinstance(self.scheduler, ReduceLROnPlateau):
-                #     self.scheduler.step(eval_score)
-                # else:
-                #     self.scheduler.step()
-                # log current learning rate in tensorboard
                 self._log_lr()
                 # remember best validation metric
                 is_best = self._is_best_eval_score(eval_score)
-
                 # save checkpoint
                 self._save_checkpoint(is_best)
 
@@ -221,8 +146,7 @@ class UNet3DTrainer:
                 self._log_images(input, target, output)
 
             if self.max_num_iterations < self.num_iterations:
-                self.logger.info(
-                    f'Maximum number of iterations {self.max_num_iterations} exceeded. Finishing training...')
+                self.logger.info(f'Maximum number of iterations {self.max_num_iterations} exceeded. Finishing training...')
                 return True
 
             self.num_iterations += 1
@@ -242,7 +166,7 @@ class UNet3DTrainer:
                 for i, t in enumerate(val_loader):
                     self.logger.info(f'Validation iteration {i}')
 
-                    input, target, weight = self._split_training_batch(t)
+                    input, weight, unary, target = self._split_training_batch(t)
 
                     output, loss = self._forward_pass(input, target, weight)
                     val_losses.update(loss.item(), self._batch_size(input))
@@ -262,6 +186,7 @@ class UNet3DTrainer:
             self.model.train()
 
     def _split_training_batch(self, t):
+
         def _move_to_device(input):
             if isinstance(input, tuple) or isinstance(input, list):
                 return tuple([_move_to_device(x) for x in input])
@@ -269,69 +194,31 @@ class UNet3DTrainer:
                 return input.to(self.device)
 
         t = _move_to_device(t)
+
         weight = None
-        if len(t) == 2:
-            input, target = t
+        if len(t) == 3:
+            input, unary, target = t
+        elif len(t) == 4:
+            input, weight, unary, target = t
         else:
-            input, target, weight = t
-        return input, target, weight
+            raise Exception("tmd!!!!!!!!!!!!")
+
+        
+        return input, weight, unary, target
 
     def _forward_pass(self, input, target, weight=None):
         # forward pass
         output = self.model(input)
+        # 
         if isinstance(output, tuple) or isinstance(output, list):
             if len(output) == 3:
-                # for test
-                # final_activation, final_conv, fea_logit = output
-                # compute the loss
-                if weight is None:
-                    loss1 = self.loss_criterion(output[1], target)
-                    if output[2] is not None:
-                        up_fea_logit = F.interpolate(output[2], size=target.size()[1:], mode='trilinear',
-                                                     align_corners=True)
-                        loss2 = self.loss_criterion(up_fea_logit, target)
-                        loss = loss1 + self.ds_weight * loss2
-                    else:
-                        loss = loss1
-                else:
-                    loss1 = self.loss_criterion(output[1], target, weight)
-                    if output[2] is not None:
-                        up_fea_logit = F.interpolate(output[2], size=target.size()[1:], mode='trilinear',
-                                                     align_corners=True)
-                        loss2 = self.loss_criterion(up_fea_logit, target, weight)
-                        loss = loss1 + self.ds_weight * loss2
-                    else:
-                        loss = loss1
+                loss = self.loss_criterion(output[1], target)
                 return output[0], loss
             elif len(output) == 2:
-                # for training
-                # final_conv, fea_logit = output
-                if weight is None:
-                    loss1 = self.loss_criterion(output[0], target)
-                    if output[1] is not None:
-                        up_fea_logit = F.interpolate(output[1], size=target.size()[1:], mode='trilinear', align_corners=True)
-                        loss2 = self.loss_criterion(up_fea_logit, target)
-                        loss = loss1 + self.ds_weight * loss2
-                    else:
-                        loss = loss1
-                else:
-                    loss1 = self.loss_criterion(output[0], target, weight)
-                    if output[1] is not None:
-                        up_fea_logit = F.interpolate(output[1], size=target.size()[1:], mode='trilinear',
-                                                     align_corners=True)
-                        loss2 = self.loss_criterion(up_fea_logit, target, weight)
-                        loss = loss1 + self.ds_weight * loss2
-                    else:
-                        loss = loss1
+                loss = self.loss_criterion(output[0], target)
                 return output[0], loss
-        else:
-            # compute the loss
-            if weight is None:
-                loss = self.loss_criterion(output, target)
-            else:
-                loss = self.loss_criterion(output, target, weight)
+        raise Exception("output 的形状不对劲")
 
-            return output, loss
 
     def _is_best_eval_score(self, eval_score):
         if self.eval_score_higher_is_better:
