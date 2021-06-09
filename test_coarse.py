@@ -404,12 +404,12 @@ def main():
         print('%s: %s' % (k, v))
 
     manual_seed = conf.get('manual_seed', None)
-    if manual_seed is not None:
-        logger.info(f'Seed the RNG for all devices with {manual_seed}')
-        torch.manual_seed(manual_seed)
-        # see https://pytorch.org/docs/stable/notes/randomness.html
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+    # if manual_seed is not None:
+    #     logger.info(f'Seed the RNG for all devices with {manual_seed}')
+    #     torch.manual_seed(manual_seed)
+    #     # see https://pytorch.org/docs/stable/notes/randomness.html
+    #     torch.backends.cudnn.deterministic = True
+    #     torch.backends.cudnn.benchmark = False
 
     # Create the model
     if args.model == 'DeepLabv3_plus_skipconnection_3d':

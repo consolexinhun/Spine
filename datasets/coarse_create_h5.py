@@ -65,8 +65,8 @@ if __name__ == '__main__':
         diff_ind = np.setdiff1d(ind, test_ind)
 
         val_ind = diff_ind[0:val_num]
-        train_ind = np.setdiff1d(diff_ind, val_ind)
-
+        # train_ind = np.setdiff1d(diff_ind, val_ind)
+        train_ind = diff_ind.copy()
         train_ind = list(train_ind + 1)
         val_ind = list(val_ind + 1)
         test_ind = list(test_ind + 1)
