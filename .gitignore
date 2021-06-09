@@ -1,0 +1,6 @@
+Verse
+.idea
+.vscode
+augment/__pycache__
+datasets/__pycache__
+networks/__pycache__

@@ -7,8 +7,8 @@ python -u ./datasets/coarse_create_h5.py \
     --data_root_dir=${data_root_dir} \
     --fold_num=1 \
     --train_num=140 \
-    --val_num=32
-
+    --val_num=32 \
+    --total_num=172
 
 export CUDA_VISIBLE_DEVICES="1"
 
