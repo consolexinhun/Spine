@@ -20,7 +20,6 @@ def compute_distance_weight_matrix(mask, alpha=1, beta=8, omega=2):
 if __name__ == '__main__':
     mean = 466.0
     std = 379.0
-
     depth = 18
     height = 128
     width = 256
@@ -60,16 +59,20 @@ if __name__ == '__main__':
 
     ind = np.random.permutation(total_num)
     for i in range(fold_num):
-        test_ind = ind[i * test_num : (i + 1) * test_num]
-        test_ind = np.sort(test_ind)
-        diff_ind = np.setdiff1d(ind, test_ind)
+        # test_ind = ind[i * test_num : (i + 1) * test_num]
+        # test_ind = 0
+        # test_ind = np.sort(test_ind)
+        # diff_ind = np.setdiff1d(ind, test_ind, True)
+        # test_ind = None/
 
-        val_ind = diff_ind[0:val_num]
-        # train_ind = np.setdiff1d(diff_ind, val_ind)
-        train_ind = diff_ind.copy()
+        val_ind = ind[0:val_num]
+        # train_ind = np.setdiff1d(diff_ind, val_ind, True)
+        train_ind = ind.copy()
+
         train_ind = list(train_ind + 1)
         val_ind = list(val_ind + 1)
-        test_ind = list(test_ind + 1)
+        # test_ind = list(test_ind + 1)
+        test_ind = []
 
         np.savez(os.path.join(foldIndDir, 'split_ind_fold' + str(i + 1) + '.npz'), train_ind=train_ind,
                                                                                 val_ind=val_ind, test_ind=test_ind)
