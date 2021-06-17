@@ -181,10 +181,7 @@ class SeparableConv3d_same(nn.Module):
         x = self.depthwise_bn(x)
         x = self.pointwise(x)
         x = self.pointwise_bn(x)
-<<<<<<< HEAD
         x = self.cbam(x)
-=======
->>>>>>> 81be780366eed4a249ed7e256ef8414f8383b80b
         return x
 
 class Block(nn.Module):
