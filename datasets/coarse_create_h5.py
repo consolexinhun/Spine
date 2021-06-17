@@ -20,7 +20,7 @@ def compute_distance_weight_matrix(mask, alpha=1, beta=8, omega=2):
 if __name__ == '__main__':
     mean = 466.0
     std = 379.0
-    depth = 18
+    depth = 15
     height = 128
     width = 256
     class_num = 20

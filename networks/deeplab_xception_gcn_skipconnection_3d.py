@@ -98,6 +98,51 @@ class ASPP_module_rate0(nn.Module):
         x = self.bn(x)
         return self.relu(x)
 
+class ChannelAttention(nn.Module):
+    def __init__(self, in_planes, ratio=16):
+        super(ChannelAttention, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool3d(1)
+        self.max_pool = nn.AdaptiveMaxPool3d(1)
+
+        self.fc1 = nn.Conv3d(in_planes, in_planes//ratio, 1, bias=False)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Conv3d(in_planes//ratio, in_planes, 1, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
+        max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
+        out = avg_out + max_out
+        return self.sigmoid(out)
+
+
+class SpatialAttention(nn.Module):
+    def __init__(self, kernel_size=7, padding=3):
+        super(SpatialAttention, self).__init__()
+        # concat完channel维度为2
+        self.conv1 = nn.Conv3d(2, 1, kernel_size, padding=padding, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)  # 沿着channel 维度计算均值和最大值
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        x = torch.cat([avg_out, max_out], dim=1)  # 沿着channel维度concat一块
+        x = self.conv1(x)
+        return self.sigmoid(x)
+
+
+class CBAM(nn.Module):
+    def __init__(self, in_planes):
+        super(CBAM, self).__init__()
+        self.ca = ChannelAttention(in_planes)
+        self.sa = SpatialAttention()
+
+    def forward(self, x):
+        out = self.ca(x)
+        x = out + x
+        res = self.sa(x)
+        return res + x
+
 class SeparableConv3d_same(nn.Module):
     def __init__(self, inplanes, planes, kernel_size=3, stride=1, dilation=1, bias=False, padding=0):
         super(SeparableConv3d_same, self).__init__()
@@ -107,6 +152,7 @@ class SeparableConv3d_same(nn.Module):
         self.depthwise_bn = nn.BatchNorm3d(inplanes)
         self.pointwise = nn.Conv3d(inplanes, planes, 1, 1, 0, 1, 1, bias=bias)
         self.pointwise_bn = nn.BatchNorm3d(planes)
+        self.cbam = CBAM(planes)
 
     def forward(self, x):
         x = fixed_padding(x, self.depthwise.kernel_size[0], rate=self.depthwise.dilation[0])
@@ -114,6 +160,7 @@ class SeparableConv3d_same(nn.Module):
         x = self.depthwise_bn(x)
         x = self.pointwise(x)
         x = self.pointwise_bn(x)
+        x = self.cbam(x)
         return x
 
 class Block(nn.Module):

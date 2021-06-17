@@ -209,7 +209,7 @@ if __name__ == '__main__':
                                  'CrossEntropyLoss_Adam_lr_0.001_pretrained':
         model_dir = os.path.join(fine_dir, 'model', 'fold' + str(fold_ind), identifier)
     else:
-        model_dir = os.path.join(fine_dir, 'model', 'fold' + str(fold_ind) + '_' + args.coarse_identifier, identifier)
+        model_dir = os.path.join(fine_dir, 'model', 'fold' + str(fold_ind), args.coarse_identifier, identifier)
     model_path = os.path.join(model_dir, 'best_checkpoint.pytorch')
     out_dir = os.path.join(fold_dir, identifier)
     if not os.path.exists(out_dir):

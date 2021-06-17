@@ -1,8 +1,6 @@
 import torch
 import os
-from networks.metrics import get_evaluation_metric
 from networks.utils import get_logger
-from networks.utils import get_number_of_learnable_parameters
 from networks.deeplab_xception_gcn_skipconnection_3d import DeepLabv3_plus_gcn_skipconnection_3d
 from networks.deeplab_xception_skipconnection_3d import DeepLabv3_plus_skipconnection_3d
 from networks.model import ResidualUNet3D, UNet3D
@@ -208,9 +206,6 @@ def get_parser():
     parser = ArgumentParser(description=__doc__,
                             formatter_class=ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("--fold_ind", type=int, default=1,
-                        help="1 to 5")
-
     parser.add_argument("--model", type=str, default='DeepLabv3_plus_gcn_skipconnection_3d',
                         help="the model name, DeepLabv3_plus_skipconnection_3d, "
                              "DeepLabv3_plus_gcn_skipconnection_3d,"
@@ -226,19 +221,8 @@ def get_parser():
     parser.add_argument("--data_dir", type=str, default='/public/pangshumao/data/five-fold',
                         help="the data dir")
 
-    parser.add_argument("--resume", dest='resume', action='store_true',
-                        help="the training will be resumed from that checkpoint.")
-
-    parser.add_argument("--no-resume", dest='resume', action='store_false',
-                        help="the training will not be resumed from that checkpoint.")
-
-    parser.set_defaults(resume=False)
-
     parser.add_argument("--pre_trained", dest='pre_trained', action='store_true',
                         help="use pretrained the model.")
-
-    parser.add_argument("--no-pre_trained", dest='pre_trained', action='store_false',
-                        help="without using pretrained the model.")
 
     parser.set_defaults(pre_trained=True)
 
@@ -265,7 +249,8 @@ def get_parser():
 
     parser.add_argument('--seed', type=int, default=0,
                         help="The manual seed")
-
+    parser.add_argument("--coarse_dir", type=str)
+    parser.add_argument("--fine_dir", type=str)
     return parser
 
 default_conf = {
@@ -327,12 +312,8 @@ def main():
     std = 379.0
     parser = get_parser()
     args = parser.parse_args()
-    foldInd = args.fold_ind
     dataDir = args.data_dir
-    foldIndData = np.load(os.path.join(dataDir, 'coarse', 'split_ind_fold' + str(foldInd) + '.npz'))
-    train_ind = foldIndData['train_ind']
-    val_ind = foldIndData['val_ind']
-    test_ind = foldIndData['test_ind']
+    test_ind = np.load(os.path.join(dataDir, 'coarse', 'split_ind_fold1.npz'))['test_ind']
 
     conf = get_default_conf()
     conf['manual_seed'] = args.seed
@@ -352,74 +333,42 @@ def main():
     conf['optimizer']['name'] = args.optimizer
     conf['optimizer']['learning_rate'] = args.learning_rate
 
-    conf['trainer']['resume'] = args.resume
     conf['trainer']['pre_trained'] = args.pre_trained
     conf['trainer']['ds_weight'] = args.ds_weight
 
-    train_coarse_foldDir = os.path.join(dataDir, 'coarse', 'model', 'fold' + str(foldInd))
-    train_fine_foldDir = os.path.join(dataDir, 'fine', 'model', 'fold' + str(foldInd))
+    train_coarse_foldDir = args.coarse_dir  # os.path.join(dataDir, 'coarse', 'model', 'fold1' )
+    train_fine_foldDir = args.fine_dir # os.path.join(dataDir, 'fine', 'model', 'fold1')
 
-    if args.loss == 'FPFNLoss':
-        return_weight = True
-        if 'gcn' in args.model:
-            if args.gcn_mode == 2:
-                identifier = args.model + '_gcn_mode_' + str(args.gcn_mode) + '_ds_weight_' + str(args.ds_weight) + \
-                             '_loss_' + args.loss + '_lamda_' + str(
-                    args.lamda) + '_' + args.optimizer + '_lr_' + str(args.learning_rate)
-            else:
-                identifier = args.model + '_gcn_mode_' + str(args.gcn_mode) + '_loss_' + args.loss + '_lamda_' + str(
-                    args.lamda) \
-                             + '_' + args.optimizer + '_lr_' + str(args.learning_rate)
+    
+    if 'gcn' in args.model:
+        if args.gcn_mode == 2:
+            identifier = args.model + '_gcn_mode_' + str(args.gcn_mode) + '_ds_weight_' + str(args.ds_weight) + \
+                            '_loss_' + args.loss + '_' + args.optimizer + \
+                            '_lr_' + str(args.learning_rate)
         else:
-            identifier = args.model + '_loss_' + args.loss + '_lamda_' + str(
-                args.lamda) + '_' + args.optimizer + '_lr_' + str(args.learning_rate)
-    elif args.loss == 'PixelWiseCrossEntropyLoss':
-        return_weight = True
-        if 'gcn' in args.model:
-            if args.gcn_mode == 2:
-                identifier = args.model + '_gcn_mode_' + str(args.gcn_mode) + '_ds_weight_' + str(args.ds_weight) + \
-                             '_loss_' + args.loss + '_' + args.optimizer + \
-                             '_lr_' + str(args.learning_rate)
-            else:
-                identifier = args.model + '_gcn_mode_' + str(
-                    args.gcn_mode) + '_loss_' + args.loss + '_' + args.optimizer + \
-                             '_lr_' + str(args.learning_rate)
-        else:
-            identifier = args.model + '_loss_' + args.loss + '_' + args.optimizer + '_lr_' + str(args.learning_rate)
+            identifier = args.model + '_gcn_mode_' + str(
+                args.gcn_mode) + '_loss_' + args.loss + '_' + args.optimizer + \
+                            '_lr_' + str(args.learning_rate)
     else:
-        return_weight = False
-        if 'gcn' in args.model:
-            if args.gcn_mode == 2:
-                identifier = args.model + '_gcn_mode_' + str(args.gcn_mode) + '_ds_weight_' + str(args.ds_weight) + \
-                             '_loss_' + args.loss + '_' + args.optimizer + \
-                             '_lr_' + str(args.learning_rate)
-            else:
-                identifier = args.model + '_gcn_mode_' + str(
-                    args.gcn_mode) + '_loss_' + args.loss + '_' + args.optimizer + \
-                             '_lr_' + str(args.learning_rate)
-        else:
-            identifier = args.model + '_loss_' + args.loss + '_' + args.optimizer + '_lr_' + str(args.learning_rate)
+        identifier = args.model + '_loss_' + args.loss + '_' + args.optimizer + '_lr_' + str(args.learning_rate)
 
     if args.seed != 0:
         identifier = identifier + '_seed_' + str(args.seed)
-
-    if args.resume:
-        identifier = identifier + '_resume'
-    elif args.pre_trained:
+    if args.pre_trained:
         identifier = identifier + '_pretrained'
 
+
     fine_identifier = 'ResidualUNet2D_Adam_lr_0.0001_weight_decay_0.0001_augment'
-    out_dir = os.path.join(dataDir, 'coarse_fine', 'out', 'fold' + str(foldInd), fine_identifier)
+    out_dir = os.path.join(dataDir, 'coarse_fine', fine_identifier)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
+    # if args.seed != 0:
+    #     fine_identifier = fine_identifier + '_seed_' + str(args.seed)
+
     coarse_checkpoint_dir = os.path.join(train_coarse_foldDir, identifier)
     fine_checkpoint_dir = os.path.join(train_fine_foldDir, fine_identifier)
     coarse_model_path = os.path.join(coarse_checkpoint_dir, 'best_checkpoint.pytorch')
     fine_model_path = os.path.join(fine_checkpoint_dir, 'best_checkpoint.pytorch')
-    # model_path = os.path.join(checkpoint_dir, 'last_checkpoint.pytorch')
-
-    # conf['trainer']['checkpoint_dir'] = coarse_checkpoint_dir
-
 
     # Create main logger
     logger = get_logger('UNet3DTrainer')
@@ -428,14 +377,6 @@ def main():
     logger.info('The configurations: ')
     for k, v in conf.items():
         print('%s: %s' % (k, v))
-
-    manual_seed = conf.get('manual_seed', None)
-    # if manual_seed is not None:
-    #     logger.info(f'Seed the RNG for all devices with {manual_seed}')
-    #     torch.manual_seed(manual_seed)
-    #     # see https://pytorch.org/docs/stable/notes/randomness.html
-    #     torch.backends.cudnn.deterministic = True
-    #     torch.backends.cudnn.benchmark = False
 
     # Create the model
     if args.model == 'DeepLabv3_plus_skipconnection_3d':
@@ -457,12 +398,9 @@ def main():
         coarse_model = ResidualUNet3D(in_channels=conf['model']['in_channels'], out_channels=conf['model']['out_channels'],
                                final_sigmoid=conf['model']['final_sigmoid'], f_maps=32, conv_layer_order='cbr')
 
+
     utils.load_checkpoint(coarse_model_path, coarse_model)
-    # put the model on GPUs
-    logger.info(f"Sending the model to '{conf['device']}'")
     coarse_model = coarse_model.to(conf['device'])
-    # Log the number of learnable parameters
-    logger.info(f'Number of learnable params {get_number_of_learnable_parameters(coarse_model)}')
 
 
     fine_model = ResidualUNet2D(in_channels=21, out_channels=20, final_sigmoid=False, f_maps=32, conv_layer_order='cbr',
@@ -473,13 +411,10 @@ def main():
 
 
     # Create evaluation metric
-    eval_criterion = get_evaluation_metric(conf)
     coarse_model.eval()
     fine_model.eval()
-    eval_scores = []
     for i in test_ind:
-        raw_path = os.path.join(dataDir, 'coarse', 'in', 'nii', 'original_mr', 'Case' + str(i) + '.nii.gz')
-        label_path = os.path.join(dataDir, 'coarse', 'in', 'nii', 'mask', 'mask_case' + str(i) + '.nii.gz')
+        raw_path = os.path.join(dataDir, 'coarse', 'MR', f'Case{i}.nii.gz')
         raw_nii = nib.load(raw_path)
         raw = raw_nii.get_data()
         H, W, D = raw.shape # [H, W, D]
@@ -507,13 +442,6 @@ def main():
         fine_transform_raw -= mean
         fine_transform_raw /= std
 
-        label_nii = nib.load(label_path)
-        label = label_nii.get_data() # numpy
-        label = label.transpose((2, 0, 1)) # [D, H, W]
-
-        label = np.expand_dims(label, axis=0) # [1, D, H, W]
-        label_tensor = torch.from_numpy(label.astype(np.int64))
-
         with torch.no_grad():
             coarse_input = transform_raw.to(conf['device'])
             logit = coarse_model(coarse_input)[1] # [1, 20, 18, 256, 128]
@@ -534,22 +462,11 @@ def main():
                 fine_prob = fine_model(img=fine_mr, unary=unary)[0]
                 fine_prob_volume[:, :, j, :, :] = fine_prob
 
-                # temp = fine_prob.to('cpu').numpy()
-                # plt.imshow(temp[0, 1, :, :])
-                # plt.show()
 
             fine_prob_volume = inv_transform_volume_tensor(fine_prob_volume, fine_crop_h_start, fine_crop_h_end,
                                         original_shape=original_shape, is_crop_d=False)
 
-            eval_score = eval_criterion(fine_prob_volume, label_tensor)
             fine_prob_volume = fine_prob_volume.numpy()
-
-            if args.eval_metric == 'DiceCoefficient':
-                print('Case %d, dice = %f' % (i, eval_score))
-            elif args.eval_metric == 'MeanIoU':
-                print('Case %d, IoU = %f' % (i, eval_score))
-
-            eval_scores.append(eval_score)
 
             prob = np.squeeze(fine_prob_volume, axis=0) # numpy, [C, D, H, W]
             seg = np.argmax(prob, axis=0).astype(np.uint8) # numpy, [D, H, W]
@@ -561,13 +478,6 @@ def main():
 
             segNii = nib.Nifti1Image(seg.astype(np.uint8), affine=raw_nii.affine)
             nib.save(segNii, seg_path)
-    if args.eval_metric == 'DiceCoefficient':
-        print('mean dice = %f' % np.mean(eval_scores))
-        np.savez(os.path.join(out_dir, 'eval_scores.npz'), dice=eval_scores, mean_dice=np.mean(eval_scores))
-    elif args.eval_metric == 'MeanIoU':
-        print('mean IOU = %f' % np.mean(eval_scores))
-        np.savez(os.path.join(out_dir, 'eval_scores.npz'), iou=eval_scores, mean_iou=np.mean(eval_scores))
-
     end_time = time.time()
     total_time = end_time - start_time
     mean_time = total_time / test_ind.size
